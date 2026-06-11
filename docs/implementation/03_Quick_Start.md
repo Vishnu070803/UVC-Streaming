@@ -97,13 +97,26 @@ make
 ```
 
 ### Run the Extractor
-Run the tool, passing the `/dev/videoX` node you found earlier:
+The extractor accepts the following positional arguments (all optional):
+* `/dev/videoX` — the V4L2 node for the UVC camera (default: `/dev/video0`)
+* `h265` or `hevc` — switch to HEVC mode (default: `h264`)
+* `-v` or `--verbose` — print full structured per-frame blocks instead of the compact one-liner
+
 ```bash
-./uvc_sei_extractor /dev/video0
+# Default: H.264, /dev/video0, compact output
+./uvc_sei_extractor
+
+# Explicit device node
+./uvc_sei_extractor /dev/video2
+
+# HEVC stream with verbose output
+./uvc_sei_extractor /dev/video2 hevc --verbose
 ```
 
 ### What Happens Next:
-1. The PC Extractor sends a `UVC_EVENT_STREAMON` command to the board.
-2. The board application dynamically builds the GStreamer capture/encode pipeline.
-3. Video flows across the USB.
-4. The PC Extractor intercepts the H.264 stream, strips out the SEI NAL unit, removes Emulation Prevention Bytes, and prints the IMU telemetry to the terminal while rendering the clean video in a window.
+1. The extractor opens the V4L2 device and builds the GStreamer pipeline: `v4l2src → h264parse → avdec_h264 → autovideosink`.
+2. A pad probe is attached to the `sink` pad of the parser element.
+3. Every incoming buffer is scanned for the SEI NAL start code (`0x00 0x00 0x00 0x01 0x06 0x05` for H.264).
+4. The payload is extracted, Emulation Prevention Bytes (`0x03`) are stripped, and the raw bytes are cast back into the `SeiMetadata` struct (validated by checking `magic == 0x494D5538` i.e. "IMU8").
+5. IMU data (accel, gyro, mag), frame ID, PTS, and IMU timestamp delta are printed to the terminal while the clean video plays in the window.
+

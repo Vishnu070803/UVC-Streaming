@@ -53,14 +53,34 @@ gantt
     Sample 8 (28ms) :active, 28, 4ms
 ```
 
-To solve this, we implemented the **Hybrid Array Model**: (The Ultimate Solution)
-To satisfy **both** the 250 Hz requirement and the <= 1 ms sync requirement, a Hybrid approach must be used that combines Model 1 and Model 2.
-1.  **Background Polling:** A thread (or FIFO) polls the IMU every 4 ms to build a high-frequency history array.
-2.  **Inline Frame Sync:** When the 30 FPS frame interrupt fires, the GStreamer pad probe instantly triggers a synchronous IMU IOCTL read.
-3.  **SEI Array Payload:** The SEI payload structure is expanded into an array. `Sample[0]` is the inline frame-synced read. `Sample[1..8]` are the background polled samples spanning the time since the previous frame.
+## Current Implementation: Model 1 (30Hz Frame-Locked Inline)
 
-*   **Pros:** Satisfies **all** requirements simultaneously. `Sample[0]` guarantees < 1 ms sync tolerance to the frame, while the array provides the high-frequency 250 Hz curvature.
-*   **Cons:** Most complex software architecture. Increases SEI payload size significantly (~369 bytes per frame). The PC client extraction script must iterate through dynamic struct arrays.
+The code in `uvc_sei_injection.h` implements **Model 1**. When a 30 FPS video frame hits the GStreamer pad probe, a single synchronous IOCTL (`ICM20948_IOC_GET_ALL`) is issued to `/dev/icm20948`. This takes approximately **200–360 µs**, which is well within the < 1 ms sync tolerance target.
+
+The `SeiMetadata` struct (in `include/sei_metadata.h`) stores exactly **one IMU sample** per frame — a single set of `accel_x_mg`, `gyro_x_mdps`, and `mag_x_ut` values. There is **no background thread** and **no sample array**.
+
+```
+Effective IMU rate = 30 Hz (one sample per video frame)
+Sync tolerance    = < 1 ms ✅
+CPU overhead      = Minimal (no threads, no polling loop) ✅
+250 Hz requirement = NOT met by current implementation ❌
+```
+
+---
+
+## Future Roadmap: Hybrid Array Model
+
+To satisfy a true 250 Hz requirement while keeping < 1 ms sync tolerance, the Hybrid Array Model is the proposed upgrade path:
+
+1. **Background Polling Thread:** A dedicated `pthread` polls the IMU at 250 Hz (every 4 ms) and accumulates readings into a ring buffer.
+2. **Inline Frame Sync:** The pad probe still issues one synchronous IOCTL at the exact frame moment for the time-critical `Sample[0]`.
+3. **Array SEI Payload:** `SeiMetadata` is extended to hold an array of ~8 samples. `Sample[0]` is the frame-synced read. `Sample[1..7]` are the background polled samples from the past 28 ms.
+
+This would require:
+- Expanding `sei_metadata.h` from a single IMU sample to an array struct.
+- Adding a background `pthread` to `uvc_sei_injection.h`.
+- Updating the extractor (`sei_extractor`) to iterate over the array.
+
 
 ---
 

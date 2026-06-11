@@ -56,6 +56,7 @@ USB_Streaming/
 │   │   └── sei_extractor/      # PC Client to strip the IMU data out
 │   └── include/                # Shared C Headers
 ├── uvc-gadget-demo/            # Shell scripts to configure USB on the board
+├── USB-CDC-NCM/                # Alternative Pipeline: Ethernet-over-USB (RTSP/TCP)
 ├── meta-usb/                   # Yocto Layer containing Kernel Patches
 ├── docs/                       # All the documentation linked above
 └── build_requirements.txt      # Debian/Ubuntu APT dependencies

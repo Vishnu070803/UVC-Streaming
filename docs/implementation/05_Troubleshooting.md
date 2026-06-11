@@ -22,5 +22,5 @@ videoconvert ! video/x-raw,format=NV12 ! v4l2h264enc
 
 ## Issue 4: "Operation not permitted" when configuring ConfigFS
 **Symptoms:** Running `mkdir` for the `h264` or `framebased` payload directories in `/sys/kernel/config/` fails.
-**Root Cause:** The kernel is missing the UVC 1.5 H.264 out-of-tree patch. 
-**Solution:** Follow the steps in `02_Environment_Setup.md` to properly apply the `0001-usb-gadget-uvc-Add-H264-support.patch` via a Yocto `.bbappend`.
+**Root Cause:** The kernel is missing the UVC framebased format patch. 
+**Solution:** Follow the steps in `02_Environment_Setup.md` to properly apply the `0002-usb-gadget-uvc-Add-framebased-format-support.patch` via a Yocto `.bbappend`. Note: both patches are required — `0001` fixes the DWC3 scatter-gather bug and `0002` adds the `framebased` ConfigFS support.

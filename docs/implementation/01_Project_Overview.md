@@ -3,13 +3,13 @@
 ## Purpose
 This project provides a complete, low-latency, hardware-accelerated video streaming pipeline for the NXP i.MX8MP processor. It functions as a **Custom Multi-Format UVC Gadget**, bridging a physical camera sensor (e.g., `/dev/video4`) to a USB Host PC, presenting itself as a standard UVC (USB Video Class) webcam.
 
-Crucially, it solves the problem of transmitting synchronized high-frequency (250Hz) IMU sensor data alongside the 30 FPS video stream by injecting the sensor data directly into the H.264 video stream as **SEI (Supplemental Enhancement Information)** metadata.
+Crucially, it solves the problem of transmitting time-synchronized IMU sensor data alongside the 30 FPS video stream by injecting the sensor data directly into the H.264 video stream as **SEI (Supplemental Enhancement Information)** metadata. The IMU is read inline per-frame via a single synchronous IOCTL, achieving < 1ms sync tolerance at 30Hz effective IMU rate.
 
 ## Key Features
 * **Native H.264/HEVC UVC Streaming:** Uses the `framebased` payload hack to achieve UVC 1.1 compliance for compressed formats.
 * **Hardware Acceleration (VPU):** Leverages the i.MX8MP's native V4L2 hardware encoders (`v4l2h264enc`) for zero-copy (`DMABUF`) encoding.
 * **Sub-Millisecond Synchronization:** The IMU is sampled via IOCTL inside a zero-latency GStreamer pad probe exactly when the frame hits user-space, guaranteeing < 1ms sync tolerance.
-* **Hybrid SEI Array Payload:** Satisfies both the 250Hz IMU sampling requirement and the tight video sync requirement by embedding an array of IMU samples into a single SEI NAL unit per frame.
+* **Single-Sample Inline SEI:** One IMU sample (9-axis: Accel + Gyro + Mag) is embedded per video frame. The sample is taken synchronously at the exact moment the frame hits the GStreamer pad probe, guaranteeing < 1ms sync tolerance. The `SeiMetadata` struct is 110 bytes packed.
 * **Emulation Prevention:** Ensures binary metadata cannot accidentally trigger H.264 start codes (0x000001) by implementing Emulation Prevention Byte (0x03) insertion and removal.
 
 ## Directory Structure

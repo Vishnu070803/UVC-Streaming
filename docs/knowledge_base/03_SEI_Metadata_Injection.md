@@ -31,4 +31,4 @@ Our custom Host PC tool (`uvc_sei_extractor`) uses GStreamer to intercept the st
 3. It extracts the payload length.
 4. It strips out the `0x03` Emulation Prevention Bytes.
 5. It casts the raw memory back into the `SeiMetadata` C-struct.
-6. It prints the values (IMU readings, latencies, frame IDs) to the terminal or logs them to a CSV file while passing the clean video frame down the pipeline to be rendered on the screen.
+6. In compact mode (default), it prints a one-line summary per frame to the terminal using `\r` (overwrite). In verbose mode (`-v` flag), it prints a full structured block with all 9 IMU axes, timestamps, device serial, GPS, and session ID while the clean video frame is rendered in a GStreamer `autovideosink` window.
