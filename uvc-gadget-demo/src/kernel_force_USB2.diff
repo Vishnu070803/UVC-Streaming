@@ -1,0 +1,12 @@
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-evk.dts b/arch/arm64/boot/dts/freescale/imx8mp-evk.dts
+index 0ece8e524e44..c86ec656f525 100755
+--- a/arch/arm64/boot/dts/freescale/imx8mp-evk.dts
++++ b/arch/arm64/boot/dts/freescale/imx8mp-evk.dts
+@@ -782,6 +782,7 @@ &usb_dwc3_0 {
+ 	adp-disable;
+ 	usb-role-switch;
+ 	role-switch-default-mode = "none";
++	maximum-speed = "high-speed";
+ 	snps,dis-u1-entry-quirk;
+ 	snps,dis-u2-entry-quirk;
+ 	status = "okay";

@@ -1,0 +1,54 @@
+# Build Requirements for UVC SEI Gadget
+
+To compile the C applications in this repository (both the board-side injectors and the host-side extractor), you need the GCC toolchain and the GStreamer development libraries.
+
+If you are compiling on a Debian/Ubuntu-based Host PC or using an APT-enabled rootfs on the board, run the following command to install the required dependencies:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential \
+    pkg-config \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly
+```
+
+### Explanation of Dependencies
+* `build-essential`: Provides `gcc` and `make` to compile the C files.
+* `pkg-config`: Used by the Makefiles to automatically find the correct header include paths and linker flags.
+* `libgstreamer1.0-dev` & `libgstreamer-plugins-base1.0-dev`: Provides the core GStreamer and `app` library headers required for compilation.
+* `gstreamer1.0-plugins-*`: The runtime plugins required to actually execute the pipelines (e.g., `v4l2src`, `h264parse`).
+
+---
+
+## 2. Board Side (Yocto / BitBake)
+
+If you are cross-compiling the application using a Yocto BitBake recipe, or deploying the dependencies to the board's filesystem, ensure your Yocto image (e.g., in `local.conf` or your custom image recipe) includes the following GStreamer packages:
+
+```bitbake
+# Add to your local.conf or image recipe
+IMAGE_INSTALL:append = " \
+    gstreamer1.0 \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-libav \
+"
+```
+
+If you plan to compile the C application **directly on the board** (rather than cross-compiling via Yocto), you must also include the development headers and build tools in your Yocto image:
+
+```bitbake
+IMAGE_INSTALL:append = " \
+    gcc \
+    make \
+    pkgconfig \
+    gstreamer1.0-dev \
+    gstreamer1.0-plugins-base-dev \
+"
+```

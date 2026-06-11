@@ -1,0 +1,25 @@
+From 3d998c97a74efd10341331ba174b77432f53e15d Mon Sep 17 00:00:00 2001
+From: S-Vishnu <vishnuvardhan.siddavatam@vconnectech.in>
+Date: Mon, 20 Apr 2026 09:17:12 +0000
+Subject: [PATCH] usb: dwc3: gadget: Disable scatter-gather for i.MX8MP UVC
+Upstream-Status: Inappropriate [i.MX8MP specific hardware workaround]
+
+---
+ drivers/usb/dwc3/gadget.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/dwc3/gadget.c b/drivers/usb/dwc3/gadget.c
+index 309a871453bf..182fa6ad6646 100644
+--- a/drivers/usb/dwc3/gadget.c
++++ b/drivers/usb/dwc3/gadget.c
+@@ -4683,7 +4683,7 @@ int dwc3_gadget_init(struct dwc3 *dwc)
+ 	dwc->gadget->ops		= &dwc3_gadget_ops;
+ 	dwc->gadget->speed		= USB_SPEED_UNKNOWN;
+ 	dwc->gadget->ssp_rate		= USB_SSP_GEN_UNKNOWN;
+-	dwc->gadget->sg_supported	= true;
++	dwc->gadget->sg_supported	= false;
+ 	dwc->gadget->name		= "dwc3-gadget";
+ 	dwc->gadget->lpm_capable	= !dwc->usb2_gadget_lpm_disable;
+ 	dwc->gadget->wakeup_capable	= true;
+-- 
+2.49.0
