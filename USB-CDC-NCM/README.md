@@ -10,6 +10,23 @@ This creates a high-speed, dedicated "Ethernet-over-USB" Local Area Network (LAN
 * **`build_and_run_server.sh` & `sei_server.c`**: The streaming server application that runs on the board (`10.0.0.1`).
 * **`build_and_run_client.sh` & `sei_client.c`**: The receiver client application that runs on the Host PC (`10.0.0.2`).
 
+```mermaid
+sequenceDiagram
+    participant B as i.MX8MP Board (10.0.0.1)
+    participant U as USB Cable (CDC-NCM)
+    participant P as Host PC (10.0.0.2)
+
+    Note over B: setup_board.sh binds<br/>UDC and assigns IP
+    Note over P: setup_pc.sh sets<br/>static IP via nmcli
+    B->>U: Emulate Network Interface (usb0)
+    U->>P: Host sees new Ethernet port (enx...)
+    
+    Note over B: build_and_run_server.sh
+    Note over P: build_and_run_client.sh
+    P->>B: RTSP PLAY Request (Port 8554)
+    B-->>P: H.264 RTP Packets (with SEI Metadata)
+```
+
 ## Execution Flow
 
 1. **Board Setup:** Run `./setup_board.sh` on the i.MX8MP.

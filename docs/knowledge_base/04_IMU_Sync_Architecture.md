@@ -29,9 +29,31 @@ A dedicated `pthread` polls the IMU every 4 ms and saves the data to a software 
 ### 3. Hardware FIFO Batching
 The ICM-20948 internal hardware FIFO is configured to automatically sample at exactly 250 Hz. When the 30 FPS frame arrives, the software issues a bulk IOCTL to drain the hardware FIFO.
 *   **Pros:** Lowest CPU polling overhead (interrupt driven). Perfect 250 Hz timing without thread jitter.
-*   **Cons:** **Fails the <= 1 ms sync tolerance requirement** for the exact same reason as Model 2. The FIFO clock and Camera clock are independent, yielding up to a 2.0 ms alignment gap.
+*   **Cons:** Because 250Hz is mathematically faster than 30Hz, we cannot rely on a 1:1 mapping. If we inject one IMU sample per video frame, we will lose ~220 samples every second.
 
-### 4. The Hybrid Array Model (The Ultimate Solution)
+```mermaid
+gantt
+    title Hybrid Array Mapping (30FPS vs 250Hz)
+    dateFormat  s
+    axisFormat  %S
+    
+    section Camera (30Hz)
+    Frame 1 (0ms) :a1, 0, 33ms
+    Frame 2 (33ms) :a2, 33, 33ms
+    Frame 3 (66ms) :a3, 66, 33ms
+
+    section IMU (250Hz)
+    Sample 1 (0ms) :active, 0, 4ms
+    Sample 2 (4ms) :active, 4, 4ms
+    Sample 3 (8ms) :active, 8, 4ms
+    Sample 4 (12ms) :active, 12, 4ms
+    Sample 5 (16ms) :active, 16, 4ms
+    Sample 6 (20ms) :active, 20, 4ms
+    Sample 7 (24ms) :active, 24, 4ms
+    Sample 8 (28ms) :active, 28, 4ms
+```
+
+To solve this, we implemented the **Hybrid Array Model**: (The Ultimate Solution)
 To satisfy **both** the 250 Hz requirement and the <= 1 ms sync requirement, a Hybrid approach must be used that combines Model 1 and Model 2.
 1.  **Background Polling:** A thread (or FIFO) polls the IMU every 4 ms to build a high-frequency history array.
 2.  **Inline Frame Sync:** When the 30 FPS frame interrupt fires, the GStreamer pad probe instantly triggers a synchronous IMU IOCTL read.

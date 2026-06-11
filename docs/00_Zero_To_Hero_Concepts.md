@@ -43,6 +43,32 @@ When you plug a USB cable into your laptop, your laptop asks the robot: *"What a
 By default, the Linux board doesn't know what to say. We use a tool called **ConfigFS** to make the robot say: *"I am a UVC Webcam, and I support H.264 Video."* 
 *(This is handled by the scripts in the `uvc-gadget-demo/` folder).*
 
+```mermaid
+graph LR
+    subgraph i.MX8MP Board
+        IMU[IMU Sensor 250Hz]
+        CAM[Camera 30FPS]
+        INJ[C Code: SEI Injector]
+    end
+    
+    subgraph USB Cable
+        UVC[UVC H.264 Pipe]
+    end
+    
+    subgraph Host PC
+        EXT[C Code: SEI Extractor]
+        SCR[Video Player]
+        LOG[IMU Telemetry]
+    end
+
+    CAM -->|Video Frame| INJ
+    IMU -->|Compass Data| INJ
+    INJ -->|Video + Sticky Note| UVC
+    UVC --> EXT
+    EXT -->|Clean Video| SCR
+    EXT -->|Peeled Sticky Note| LOG
+```
+
 ### 2. V4L2 and DMABUF (Moving the Water)
 Video images are massive. If the robot's brain (the CPU) has to copy the image pixel-by-pixel to send it to the USB pipe, it will max out its processor and overheat.
 Instead, we use **DMABUF**. Imagine DMABUF as a magic teleporter. The camera hardware places the image in a specific spot in memory, and the USB hardware teleports it directly from that spot without the CPU ever touching it. 
